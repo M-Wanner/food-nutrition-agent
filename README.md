@@ -7,7 +7,7 @@ A conversational AI agent that answers questions about nutrition, diet, plant-ba
 -   **Structured data**: real-time nutrition lookups via the [USDA FoodData Central](https://fdc.nal.usda.gov/) API returning calories, protein, fat, carbohydrates, sugar, fiber, and sodium.
 -   **Unstructured data**: Retrieval Augmented Generation (RAG) over a set of public health authority documents on diet, allergies, and vegan/vegetarian eating.
 -   **Short-term memory**: the agent remembers what was said earlier in the conversation and can answer follow-up questions about it without you repeating the details.
--   **Short-term memory**: the agent remembers what was said earlier in the conversation and can answer follow-up questions about it without you repeating the details.
+-   **Safeguarding**: the system prompt explicitly forbids personalized medical advice so that the agent redirects to a qualified healthcare professional.
 
 The agent uses the ReAct agent pattern and decides, whether it needs to look up nutrition facts, search the document collection, both, or neither.
 
