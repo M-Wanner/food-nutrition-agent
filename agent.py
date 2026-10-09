@@ -14,8 +14,8 @@ from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.checkpoint.memory import InMemorySaver
 
-from rag_search import build_search_documents_tool
-from usda_api import calculate_average_nutrition
+from tools.rag_search import build_search_documents_tool
+from tools.usda_api import calculate_average_nutrition
 
 load_dotenv()
 
