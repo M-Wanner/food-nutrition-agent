@@ -19,6 +19,17 @@ from tools.usda_api import calculate_average_nutrition
 
 load_dotenv()
 
+guard_prompt = """
+Analyse the text below. Does it contain any medical advice or is it only about
+food nutrition and dietary advice. If it contains any medical advice answer with
+one word "UNSAFE". If not contains only food nutrition and dietary advice answer
+with one word "SAFE".
+
+Text: {agent_response}
+"""
+
+guard_model = ChatOllama(model="qwen3.5:4b", temperature=0)
+
 system_prompt = """
 You are an expert food nutrition assistant.
 
@@ -57,29 +68,29 @@ Rules:
 
 
 def main():
-	model = ChatOllama(model="qwen3.5:4b", temperature=0)
-	tools = [calculate_average_nutrition, build_search_documents_tool()]
-	agent = create_agent(
-	    model,
-	    tools,
-	    system_prompt=system_prompt,
-	    checkpointer=InMemorySaver(),
-	    middleware=[
-	        SummarizationMiddleware(
-	            model=ChatOllama( model="qwen3.5:4b", temperature=0),
-	            trigger=("tokens", 2500),
-	            keep=("messages", 6),
-	            trim_tokens_to_summarize=1200,
-	        )
-	    ],
-	)
+    model = ChatOllama(model="qwen3.5:4b", temperature=0)
+    tools = [calculate_average_nutrition, build_search_documents_tool()]
+    agent = create_agent(
+        model,
+        tools,
+        system_prompt=system_prompt,
+        checkpointer=InMemorySaver(),
+        middleware=[
+            SummarizationMiddleware(
+                model=ChatOllama( model="qwen3.5:4b", temperature=0),
+                trigger=("tokens", 2500),
+                keep=("messages", 6),
+                trim_tokens_to_summarize=1200,
+            )
+        ],
+    )
 
-	thread_config = {"configurable": {"thread_id": "food-agent-session"}}
+    thread_config = {"configurable": {"thread_id": "food-agent-session"}}
 
-	while True:
-	    print("-------------------------------")
+    while True:
+        print("-------------------------------")
         try:
-	        question = input("Ask your question (q to quit): ").strip()
+            question = input("Ask your question (q to quit): ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nExiting.")
             break
@@ -92,11 +103,17 @@ def main():
 
         try:
             result = agent.invoke({"messages": [HumanMessage(content=question)]}, config=thread_config)
+            guard_decision = guard_model.invoke([HumanMessage(content=guard_prompt.format(agent_response=result["messages"][-1].content))]).content.strip().upper()
+
+            if "UNSAFE" in guard_decision:
+                print("Please consult a certified healthcare professional or allergist for medical concerns.")
+                continue
+
         except Exception as exc:
             print(f"An error occurred: {exc}")
-        continue
+            continue
 
-	    print(result["messages"][-1].content)
+        print(result["messages"][-1].content)
 
 
 if __name__ == "__main__":
