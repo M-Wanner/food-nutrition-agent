@@ -2,6 +2,7 @@ import os
 import requests
 import numpy as np
 from langchain_core.tools import tool
+from langsmith import traceable
 
 nutrients = {
     1008: "energy_kcal",
@@ -77,8 +78,8 @@ def calculate_averages(values: dict) -> dict:
         averages[name] = round(float(np.mean(nutrient_values)), 2) if nutrient_values else None
     return averages
 
-
 @tool
+@traceable
 def calculate_average_nutrition(product: str) -> dict:
     """Calculate average nutrition values per 100 g for a food."""
     try:

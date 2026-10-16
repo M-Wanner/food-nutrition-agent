@@ -8,6 +8,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from langchain_openrouter import ChatOpenRouter
+from langsmith import traceable
 
 from tools.rag_search import build_search_documents_tool
 from tools.usda_api import calculate_average_nutrition
@@ -62,6 +63,7 @@ Rules:
 """
 
 
+@traceable
 def main():
     model = ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0)
     tools = [calculate_average_nutrition, build_search_documents_tool()]

@@ -7,6 +7,7 @@ from langchain_core.documents import Document
 from langchain_core.tools import tool
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langsmith import traceable
 
 sources = [
     "https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/food-allergies",  # food allergies
@@ -62,6 +63,7 @@ def build_search_documents_tool():
     retriever = vector_store.as_retriever(search_kwargs={"k": 2})
 
     @tool
+    @traceable
     def search_documents(question: str) -> str:
         """Search the nutrition knowledge base for relevant information."""
         try:
