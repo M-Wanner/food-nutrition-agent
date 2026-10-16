@@ -62,9 +62,7 @@ Rules:
 - Use tables for nutritional comparisons.
 """
 
-
-@traceable
-def main():
+def get_agent():
     model = ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0)
     tools = [calculate_average_nutrition, build_search_documents_tool()]
     agent = create_agent(
@@ -81,7 +79,11 @@ def main():
             )
         ],
     )
+    return agent
 
+@traceable
+def main():
+    agent = get_agent()
     thread_config = {"configurable": {"thread_id": "food-agent-session"}}
 
     while True:
