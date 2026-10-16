@@ -1,18 +1,13 @@
 import os
 
 import numpy as np
-import requests
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.agents.middleware import SummarizationMiddleware
-from langchain_chroma import Chroma
-from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
-from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
-from langchain_core.tools import tool
-from langchain_ollama import ChatOllama, OllamaEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.checkpoint.memory import InMemorySaver
+
+from langchain_openrouter import ChatOpenRouter
 
 from tools.rag_search import build_search_documents_tool
 from tools.usda_api import calculate_average_nutrition
@@ -28,7 +23,7 @@ with one word "SAFE".
 Text: {agent_response}
 """
 
-guard_model = ChatOllama(model="qwen3.5:4b", temperature=0)
+guard_model = ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0)
 
 system_prompt = """
 You are an expert food nutrition assistant.
@@ -68,7 +63,7 @@ Rules:
 
 
 def main():
-    model = ChatOllama(model="qwen3.5:4b", temperature=0)
+    model = ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0)
     tools = [calculate_average_nutrition, build_search_documents_tool()]
     agent = create_agent(
         model,
@@ -77,7 +72,7 @@ def main():
         checkpointer=InMemorySaver(),
         middleware=[
             SummarizationMiddleware(
-                model=ChatOllama( model="qwen3.5:4b", temperature=0),
+                model=ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0),
                 trigger=("tokens", 2500),
                 keep=("messages", 6),
                 trim_tokens_to_summarize=1200,

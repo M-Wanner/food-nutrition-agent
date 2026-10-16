@@ -5,7 +5,7 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
 from langchain_core.documents import Document
 from langchain_core.tools import tool
-from langchain_ollama import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 sources = [
@@ -41,10 +41,17 @@ def build_search_documents_tool():
 
     splits = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100).split_documents(documents)
 
+    openrouter_embeddings  = OpenAIEmbeddings(
+            openai_api_base="https://openrouter.ai/api/v1",
+            openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+            model="nvidia/nemotron-3-embed-1b:free",       
+            check_embedding_ctx_length=False    
+        )
+
     vector_store = Chroma(
         collection_name="Documents",
         persist_directory="./chroma_db",
-        embedding_function=OllamaEmbeddings(model="mxbai-embed-large"),
+        embedding_function=openrouter_embeddings,
     )
 
     existing_ids = vector_store.get().get("ids", [])

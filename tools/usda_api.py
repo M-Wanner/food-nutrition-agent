@@ -28,6 +28,7 @@ def search_product(product: str, page_size: int = 200) -> dict:
         "https://api.nal.usda.gov/fdc/v1/foods/search",
         params={
             "api_key": api_key,
+            "userAgent": "food-nutrition-agent",
             "query": product,
             "pageSize": page_size,
         },
