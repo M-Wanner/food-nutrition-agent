@@ -25,7 +25,9 @@ def load_cached_agent():
     return get_agent()
 
 agent = load_cached_agent()
-thread_config = {"configurable": {"thread_id": "food-agent-session"}}
+if "thread_id" not in st.session_state:
+    st.session_state["thread_id"] = str(uuid.uuid4())
+thread_config = {"configurable": {"thread_id": st.session_state["thread_id"]}}
 
 
 if "messages" not in st.session_state:
