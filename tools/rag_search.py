@@ -67,10 +67,17 @@ def build_search_documents_tool():
         embedding_function=openrouter_embeddings,
     )
 
-    existing_ids = vector_store.get().get("ids", [])
+    if not documents:
+        raise RuntimeError("No RAG documents could be loaded.")
+
+    existing_ids = vector_store.get(limit=1).get("ids", [])
+
     if not existing_ids:
         vector_store.add_documents(documents=splits)
-        retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+
+    retriever = vector_store.as_retriever(
+        search_kwargs={"k": 2}
+    )
 
     @tool
     @traceable
