@@ -50,7 +50,9 @@ if question := st.chat_input("Ask your question about food nutrition, dietary ad
         with st.spinner("The agent is analyzing data and documents..."):
             try:
                 result = agent.invoke({"messages": [HumanMessage(content=question)]}, config=thread_config)
-                answer = result["messages"][-1].content
+                answer = "".join(
+                    item.get("text", "") for item in result["messages"][-1].content if isinstance(item, dict) and item.get("type") == "text"
+                )
                 st.markdown(answer)
                 st.session_state.messages.append({"role": "assistant", "content": answer})
             except Exception as exc:
