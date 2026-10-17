@@ -1,19 +1,20 @@
 import os
 import streamlit as st
 from langchain_core.messages import HumanMessage
-import uuid
+
 from agent import get_agent
+import uuid
 
 st.set_page_config(page_title="Food Nutrition Agent", page_icon="🥗", layout="centered")
 st.title("Food Nutrition Agent")
 st.write("Ask questions about food nutrition, dietary advice, and food labels.")
 
 
-if "OPENROUTER_API_KEY" in st.secrets:
-    os.environ["OPENROUTER_API_KEY"] = st.secrets["OPENROUTER_API_KEY"]
-elif not os.environ.get("OPENROUTER_API_KEY"):
-    st.error("OpenRouter API key is not configured.")
-    st.info("Please enter your OpenRouter API key in the Streamlit app settings under 'Secrets'.")
+if "GOOGLE_API_KEY" in st.secrets:
+    os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+elif not os.environ.get("GOOGLE_API_KEY"):
+    st.error("Google API key is not configured.")
+    st.info("Please enter your Google API key in the Streamlit app settings under 'Secrets'.")
     st.stop()
 
 if "LANGSMITH_API_KEY" in st.secrets:

@@ -7,7 +7,7 @@ from langchain.agents.middleware import SummarizationMiddleware
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
-from langchain_openrouter import ChatOpenRouter
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langsmith import traceable
 
 from tools.rag_search import build_search_documents_tool
@@ -24,7 +24,7 @@ with one word "SAFE".
 Text: {agent_response}
 """
 
-guard_model = ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0)
+guard_model = ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite")
 
 system_prompt = """
 You are an expert food nutrition assistant.
@@ -63,7 +63,7 @@ Rules:
 """
 
 def get_agent():
-    model = ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0)
+    model = ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite")
     tools = [calculate_average_nutrition, build_search_documents_tool()]
     agent = create_agent(
         model,
@@ -72,7 +72,7 @@ def get_agent():
         checkpointer=InMemorySaver(),
         middleware=[
             SummarizationMiddleware(
-                model=ChatOpenRouter(model="nvidia/nemotron-3.5-lightning:free", temperature=0),
+                model=ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite"),
                 trigger=("tokens", 2500),
                 keep=("messages", 6),
                 trim_tokens_to_summarize=1200,
@@ -102,9 +102,13 @@ def main():
 
         try:
             result = agent.invoke({"messages": [HumanMessage(content=question)]}, config=thread_config)
-            guard_decision = guard_model.invoke([HumanMessage(content=guard_prompt.format(agent_response=result["messages"][-1].content))]).content.strip().upper()
+            agent_response_text = "".join(
+                item.get("text", "") for item in result["messages"][-1].content if isinstance(item, dict) and item.get("type") == "text"
+            )
+            guard_decision = guard_model.invoke([HumanMessage(content=guard_prompt.format(agent_response=agent_response_text))])
+            guard_decision_text = "".join(item.get("text", "") for item in guard_decision.content if isinstance(item, dict) and item.get("type") == "text")
 
-            if "UNSAFE" in guard_decision:
+            if "UNSAFE" in guard_decision_text:
                 print("Please consult a certified healthcare professional or allergist for medical concerns.")
                 continue
 
@@ -112,7 +116,7 @@ def main():
             print(f"An error occurred: {exc}")
             continue
 
-        print(result["messages"][-1].content)
+        print(agent_response_text)
 
 
 if __name__ == "__main__":

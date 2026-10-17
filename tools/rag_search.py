@@ -5,7 +5,7 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
 from langchain_core.documents import Document
 from langchain_core.tools import tool
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langsmith import traceable
 from dotenv import load_dotenv
@@ -44,35 +44,29 @@ def build_search_documents_tool():
         except Exception as exc:
             print(f"Warning: could not load {url}: {exc}")
 
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if not api_key and hasattr(st, "secrets") and "OPENROUTER_API_KEY" in st.secrets:
-        api_key = st.secrets["OPENROUTER_API_KEY"]
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key and hasattr(st, "secrets") and "GOOGLE_API_KEY" in st.secrets:
+        api_key = st.secrets["GOOGLE_API_KEY"]
 
     splits = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100).split_documents(documents)
 
-    openrouter_embeddings  = OpenAIEmbeddings(
-            openai_api_base="https://openrouter.ai/api/v1",
-            openai_api_key=api_key,
-            model="nvidia/nemotron-3-embed-1b:free",       
-            check_embedding_ctx_length=False,
-            chunk_size=128,
-            default_headers={
-                "X-Title": "Food Nutrition Agent",
-            }
+    google_embeddings  = GoogleGenerativeAIEmbeddings(
+            google_api_key=api_key,
+            model="gemini-embedding-2",       
+            check_embedding_ctx_length=False
         )
 
     vector_store = Chroma(
         collection_name="Documents",
         persist_directory="./chroma_db",
-        embedding_function=openrouter_embeddings,
+        embedding_function=google_embeddings,
     )
 
     existing_ids = vector_store.get().get("ids", [])
-    if existing_ids:
-        vector_store.delete(ids=existing_ids)
-    vector_store.add_documents(documents=splits)
-
-    retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+    if not existing_ids:
+        ...
+        #vector_store.add_documents(documents=splits)
+        #retriever = vector_store.as_retriever(search_kwargs={"k": 2})
 
     @tool
     @traceable
