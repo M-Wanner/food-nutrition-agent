@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from langchain_core.messages import HumanMessage
-
+import uuid
 from agent import get_agent
 
 st.set_page_config(page_title="Food Nutrition Agent", page_icon="🥗", layout="centered")
