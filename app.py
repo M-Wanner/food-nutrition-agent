@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from langchain_core.messages import HumanMessage
 
-from agent import get_agent
+from agent import get_agent, content_to_text
 import uuid
 
 st.set_page_config(page_title="Food Nutrition Agent", page_icon="🥗", layout="centered")
@@ -50,9 +50,7 @@ if question := st.chat_input("Ask your question about food nutrition, dietary ad
         with st.spinner("The agent is analyzing data and documents..."):
             try:
                 result = agent.invoke({"messages": [HumanMessage(content=question)]}, config=thread_config)
-                answer = "".join(
-                    item.get("text", "") for item in result["messages"][-1].content if isinstance(item, dict) and item.get("type") == "text"
-                )
+                answer = content_to_text(result["messages"][-1].content)
                 st.markdown(answer)
                 st.session_state.messages.append({"role": "assistant", "content": answer})
             except Exception as exc:

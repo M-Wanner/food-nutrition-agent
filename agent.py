@@ -81,6 +81,24 @@ def get_agent():
     )
     return agent
 
+
+def content_to_text(content) -> str:
+    if isinstance(content, str):
+        return content.strip()
+
+    if isinstance(content, list):
+        parts = []
+
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(item["text"])
+
+        return "\n".join(parts).strip()
+
+    return ""
+
 @traceable
 def main():
     agent = get_agent()
@@ -102,11 +120,9 @@ def main():
 
         try:
             result = agent.invoke({"messages": [HumanMessage(content=question)]}, config=thread_config)
-            agent_response_text = "".join(
-                item.get("text", "") for item in result["messages"][-1].content if isinstance(item, dict) and item.get("type") == "text"
-            )
+            agent_response_text = content_to_text(result["messages"][-1].content)
             guard_decision = guard_model.invoke([HumanMessage(content=guard_prompt.format(agent_response=agent_response_text))])
-            guard_decision_text = "".join(item.get("text", "") for item in guard_decision.content if isinstance(item, dict) and item.get("type") == "text")
+            guard_decision_text = content_to_text(guard_decision.content)
 
             if "UNSAFE" in guard_decision_text:
                 print("Please consult a certified healthcare professional or allergist for medical concerns.")
