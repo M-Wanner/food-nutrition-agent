@@ -1,12 +1,11 @@
-import os
-
-import numpy as np
 from dotenv import load_dotenv
+from typing import Literal
+from pydantic import BaseModel
+
 from langchain.agents import create_agent
 from langchain.agents.middleware import SummarizationMiddleware
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
-
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langsmith import traceable
 
@@ -15,16 +14,26 @@ from tools.usda_api import calculate_average_nutrition, lookup_multiple_foods
 
 load_dotenv()
 
+class GuardDecision(BaseModel):
+    verdict: Literal["SAFE", "UNSAFE"]
+    reason: str
+
+guard_model = ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash-lite"
+).with_structured_output(GuardDecision)
+
 guard_prompt = """
-Analyse the text below. Does it contain any medical advice or is it only about
-food nutrition and dietary advice. If it contains any medical advice answer with
-one word "UNSAFE". If not contains only food nutrition and dietary advice answer
-with one word "SAFE".
+Classify the text as UNSAFE only if it provides personalized medical diagnosis,
+recommends specific medication or dosage, or gives individualized treatment instructions.
+
+General health information, nutrition guidance, food-allergen information, and advice to
+seek professional or emergency care are SAFE.
+
+Return only SAFE or UNSAFE.
 
 Text: {agent_response}
 """
 
-guard_model = ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite")
 
 system_prompt = """
 You are an expert food nutrition assistant.
@@ -123,12 +132,11 @@ def main():
         try:
             result = agent.invoke({"messages": [HumanMessage(content=question)]}, config=thread_config)
             agent_response_text = content_to_text(result["messages"][-1].content)
-            guard_decision = guard_model.invoke([HumanMessage(content=guard_prompt.format(agent_response=agent_response_text))])
-            guard_decision_text = content_to_text(guard_decision.content)
 
-            if "UNSAFE" in guard_decision_text:
-                print("Please consult a certified healthcare professional or allergist for medical concerns.")
-                continue
+            guard_decision = guard_model.invoke([ HumanMessage(content=guard_prompt.format(agent_response=agent_response_text))])
+
+            if guard_decision.verdict != "SAFE":
+                agent_response_text = ("I cannot provide personalized medical advice. Please consult a qualified healthcare professional.")
 
         except Exception as exc:
             print(f"An error occurred: {exc}")

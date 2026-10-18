@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from langchain_core.messages import HumanMessage
 
-from agent import get_agent, content_to_text
+from agent import get_agent, content_to_text, guard_model, guard_prompt
 import uuid
 
 st.set_page_config(page_title="Food Nutrition Agent", page_icon="🥗", layout="centered")
@@ -51,6 +51,12 @@ if question := st.chat_input("Ask your question about food nutrition, dietary ad
             try:
                 result = agent.invoke({"messages": [HumanMessage(content=question)]}, config=thread_config)
                 answer = content_to_text(result["messages"][-1].content)
+
+                guard_decision = guard_model.invoke([ HumanMessage(content=guard_prompt.format(agent_response=answer))])
+                
+                if guard_decision.verdict != "SAFE":
+                    answer = ("I cannot provide personalized medical advice. Please consult a qualified healthcare professional.")
+
                 st.markdown(answer)
                 st.session_state.messages.append({"role": "assistant", "content": answer})
             except Exception as exc:
