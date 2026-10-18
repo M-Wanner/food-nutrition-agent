@@ -47,7 +47,9 @@ Rules:
   requested.
 - Always state how many USDA products were used when reporting average values.
 - When answering from retrieved documents, cite the relevant information
-  using [Source N].
+  using clickable Markdown links, for example: [NHS - The vegan diet](https://www.nhs.uk/...)
+- Use the exact URL provided in the retrieved document context.
+- Never invent, modify, or guess source URLs.
 - Never cite a source that was not returned by the search_documents tool.
 - If the documents do not contain the requested information, explicitly say
   that the information could not be found in the provided sources.

@@ -25,10 +25,9 @@ sources = [
 def format_docs(docs: list[Document]) -> str:
     """Format retrieved documents as readable text with a source label."""
     return "\n\n".join(
-        f"[Source {index}]\n"
-        f"{doc.metadata.get('source', 'unknown')}\n"
-        f"{doc.page_content[:1500]}"
-        for index, doc in enumerate(docs, start=1)
+        f"Source URL: {doc.metadata.get('source', 'unknown')}\n"
+        f"Content: {doc.page_content[:2500]}"
+        for doc in docs
     )
 
 
