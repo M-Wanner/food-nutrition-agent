@@ -11,7 +11,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langsmith import traceable
 
 from tools.rag_search import build_search_documents_tool
-from tools.usda_api import calculate_average_nutrition
+from tools.usda_api import calculate_average_nutrition, lookup_multiple_foods
 
 load_dotenv()
 
@@ -64,7 +64,7 @@ Rules:
 
 def get_agent():
     model = ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite")
-    tools = [calculate_average_nutrition, build_search_documents_tool()]
+    tools = [calculate_average_nutrition, build_search_documents_tool(), lookup_multiple_foods]
     agent = create_agent(
         model,
         tools,

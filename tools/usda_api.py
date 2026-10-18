@@ -1,6 +1,7 @@
 import os
 import requests
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor
 from langchain_core.tools import tool
 from langsmith import traceable
 
@@ -102,18 +103,40 @@ def calculate_average_nutrition(product: str) -> dict:
             "message": f"No nutrition data found for '{product}'.",
         }
 
-    averages = calculate_averages(extract_nutrient_values(foods))
+    values = extract_nutrient_values(foods)
+    averages = calculate_averages(values)
 
     return {
         "food": product,
         "products_found": len(foods),
-        "nutrition_per_100g": {
-            "energy": f"{averages['energy_kcal']} kcal",
-            "protein": f"{averages['protein_g']} g",
-            "fat": f"{averages['fat_g']} g",
-            "carbohydrates": f"{averages['carbohydrates_g']} g",
-            "sugar": f"{averages['sugar_g']} g",
-            "fiber": f"{averages['fiber_g']} g",
-            "sodium": f"{averages['sodium_mg']} mg",
+        "nutrition_per_100g": averages,
+        "values_used_per_nutrient": {
+            name: len(nutrient_values)
+            for name, nutrient_values in values.items()
         },
     }
+
+@tool
+@traceable
+def lookup_multiple_foods(products: list[str]) -> list[dict]:
+    """Look up nutrition values per 100 g for multiple foods concurrently."""
+
+    if not products or len(products) > 8:
+        return []
+
+    def lookup(product: str) -> dict:
+        try:
+            return calculate_average_nutrition.invoke({
+                "product": product
+            })
+        except Exception:
+            return {
+                "food": product,
+                "nutrition_per_100g": None,
+                "message": "Nutrition lookup failed.",
+            }
+
+    with ThreadPoolExecutor(
+        max_workers=min(4, len(products))
+    ) as executor:
+        return list(executor.map(lookup, products))
