@@ -1,6 +1,12 @@
+
 # Food Nutrition Agent
 
 A conversational AI agent that answers questions about nutrition, diet, plant-based alternatives and other questions related to food.
+
+## How to use
+
+[Open the app on Steamlit](https://food-nutrition-agent.streamlit.app/) and start asking questions.
+
 
 ## Functions
 
@@ -11,39 +17,8 @@ A conversational AI agent that answers questions about nutrition, diet, plant-ba
 
 The agent uses the ReAct agent pattern and decides, whether it needs to look up nutrition facts, search the document collection, both, or neither.
 
-Everything runs locally via [Ollama](https://ollama.com/).
-
  **Disclaimer**: This project is for educational/portfolio purposes. It does not provide medical advice. For food allergies, intolerances, or any other health condition, always consult a qualified healthcare professional.
 
-## Setup
-
-### Prerequisites
-
-1.  Python 3.10+
-2.  [Ollama](https://ollama.com/) installed and running locally
-3.  Pull the two models this project uses:
-    
-    ```bash
-    ollama pull qwen3.5:4b
-    ollama pull mxbai-embed-large
-    ```
-    
-4.  A free USDA FoodData Central API key: https://fdc.nal.usda.gov/api-key-signup.html
-
-### Installation
-
-```bash
-git clone https://github.com/M-Wanner/food-nutrition-agent
-cd food-nutrition-agent
-pip install -r requirements.txt
-```
-Insert your API key into the `.env` file.
-
-### Run
-
-```bash
-python agent.py
-```
 
 ## Example Conversation
 
