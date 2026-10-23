@@ -2,6 +2,7 @@ import os
 import numpy as np
 import requests
 from langchain_chroma import Chroma
+from bs4 import SoupStrainer
 from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
 from langchain_core.documents import Document
 from langchain_core.tools import tool
@@ -38,7 +39,7 @@ def build_search_documents_tool():
 
     for url in sources:
         try:
-            loader = PyPDFLoader(url) if url.endswith(".pdf") else WebBaseLoader(url)
+            loader = PyPDFLoader(url) if url.endswith(".pdf") else WebBaseLoader( url, bs_kwargs={ "parse_only": SoupStrainer(["main", "article"]) } )
             documents.extend(loader.load())
         except Exception as exc:
             print(f"Warning: could not load {url}: {exc}")
@@ -47,7 +48,7 @@ def build_search_documents_tool():
     if not api_key and hasattr(st, "secrets") and "OPENROUTER_API_KEY" in st.secrets:
         api_key = st.secrets["OPENROUTER_API_KEY"]
 
-    splits = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100).split_documents(documents)
+    splits = RecursiveCharacterTextSplitter(chunk_size=900, chunk_overlap=150).split_documents(documents)
 
     openrouter_embeddings  = OpenAIEmbeddings(
             openai_api_base="https://openrouter.ai/api/v1",
@@ -74,7 +75,14 @@ def build_search_documents_tool():
         vector_store.delete(ids=existing_ids)
     vector_store.add_documents(documents=splits)
 
-    retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+    retriever = vector_store.as_retriever(
+        search_type="mmr",
+        search_kwargs={
+            "k": 4,
+            "fetch_k": 15,
+            "lambda_mult": 0.35,
+        }
+    )
 
     @tool
     @traceable
